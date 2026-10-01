@@ -23,28 +23,23 @@ targets:
 
   # ---------------------------------------------------------------
   # 1) 容器 App：iOS 上 Safari 扩展必须包在一个 App 里
+  #
+  # 注意：Info.plist 用仓库里手写的文件，不再让 XcodeGen 生成。
+  # 原因：XcodeGen 生成的 plist 缺少 iOS 扩展必需的键，
+  #      会让 ValidateEmbeddedBinary 报
+  #      "Couldn't load Info dictionary for ...appex" 而编译失败。
   # ---------------------------------------------------------------
   XstreeIOS:
     type: application
     platform: iOS
     sources:
       - path: App
-    info:
-      path: App/Info.plist
-      properties:
-        CFBundleDisplayName: ibutv 兼容
-        CFBundleName: XstreeIOS
-        CFBundleShortVersionString: "1.0.0"
-        UILaunchScreen: {}
-        UIApplicationSceneManifest:
-          UIApplicationSupportsMultipleScenes: false
-        UISupportedInterfaceOrientations:
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
+        excludes:
+          - "Info.plist"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.xstreecompat.k7m3q9
+        INFOPLIST_FILE: App/Info.plist
         GENERATE_INFOPLIST_FILE: NO
     dependencies:
       - target: XstreeIOSExtension
@@ -63,17 +58,10 @@ targets:
           - "Info.plist"
       - path: Extension/Resources
         type: folder
-    info:
-      path: Extension/Info.plist
-      properties:
-        CFBundleDisplayName: ibutv 兼容
-        CFBundleShortVersionString: "1.0.0"
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.Safari.web-extension
-          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SafariWebExtensionHandler
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.xstreecompat.k7m3q9.Extension
+        INFOPLIST_FILE: Extension/Info.plist
         GENERATE_INFOPLIST_FILE: NO
 
 # -------------------------------------------------------------------
