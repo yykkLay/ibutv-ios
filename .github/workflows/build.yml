@@ -4,10 +4,10 @@ name: Build unsigned iOS IPA
 # 用法：把这个仓库上传到 GitHub（public 仓库免费不限时长），
 #       然后到 Actions 页面点 Run workflow，跑完下载 XstreeIOS-unsigned.ipa
 
+# 手动 / 脚本触发。刻意不用 on: push ——
+# 否则逐个文件上传时每个 commit 都会触发一次 macOS 构建，白白排队。
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
 
 jobs:
   build:
