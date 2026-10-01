@@ -69,6 +69,26 @@ jobs:
               build
           fi
 
+      - name: 诊断信息（编译失败时自动打印）
+        if: failure()
+        run: |
+          echo "===== 1. 扩展 appex 目录内容 ====="
+          find build/Build/Products/Release-iphoneos/XstreeIOSExtension.appex -maxdepth 3 2>/dev/null || echo "appex 不存在"
+          echo "===== 2. appex/Info.plist 是否存在 ====="
+          ls -la build/Build/Products/Release-iphoneos/XstreeIOSExtension.appex/Info.plist 2>&1 || true
+          echo "===== 3. appex/Info.plist 实际内容 ====="
+          plutil -p build/Build/Products/Release-iphoneos/XstreeIOSExtension.appex/Info.plist 2>&1 || true
+          echo "===== 4. App 的 PlugIns 目录 ====="
+          find build/Build/Products/Release-iphoneos/XstreeIOS.app/PlugIns -maxdepth 3 2>/dev/null || echo "PlugIns 不存在"
+          echo "===== 5. PlugIns 里 appex 的 Info.plist ====="
+          plutil -p build/Build/Products/Release-iphoneos/XstreeIOS.app/PlugIns/XstreeIOSExtension.appex/Info.plist 2>&1 || true
+          echo "===== 6. 仓库里的 Extension/Info.plist 源码 ====="
+          cat Extension/Info.plist
+          echo "===== 7. 扩展 target 的关键构建设置 ====="
+          xcodebuild -project XstreeIOS.xcodeproj -target XstreeIOSExtension -showBuildSettings 2>/dev/null | grep -Ei 'INFOPLIST|MACH_O_TYPE|PRODUCT_BUNDLE_PACKAGE_TYPE|PRODUCT_MODULE_NAME|EXECUTABLE_NAME|WRAPPER_EXTENSION|GENERATE_INFO|SKIP_INSTALL|APPLICATION_EXTENSION' || true
+          echo "===== 8. App target 的关键构建设置 ====="
+          xcodebuild -project XstreeIOS.xcodeproj -target XstreeIOS -showBuildSettings 2>/dev/null | grep -Ei 'INFOPLIST|PRODUCT_BUNDLE_IDENTIFIER|WRAPPER_EXTENSION' || true
+
       - name: 打包成未签名的 ipa
         run: |
           set -e
