@@ -115,7 +115,7 @@ jobs:
           echo "===== 8. App target 的关键构建设置 ====="
           xcodebuild -project XstreeIOS.xcodeproj -target XstreeIOS -showBuildSettings 2>/dev/null | grep -Ei 'INFOPLIST|PRODUCT_BUNDLE_IDENTIFIER|WRAPPER_EXTENSION' || true
 
-      - name: 打包成未签名的 ipa
+      - name: 打包成 ipa（XML plist + ad-hoc 签名，兼容第三方签名工具）
         run: |
           set -e
           echo "==> 查找编译产物"
@@ -126,11 +126,34 @@ jobs:
             find . -maxdepth 6 -type d | head -n 60
             exit 1
           fi
+          APPEX_PATH="$APP_PATH/PlugIns/XstreeIOSExtension.appex"
+
+          echo "==> 1) 把 Info.plist 转成 XML 格式"
+          echo "    （很多第三方签名工具解析不了 Xcode 默认的二进制 plist）"
+          plutil -convert xml1 "$APP_PATH/Info.plist"
+          plutil -convert xml1 "$APPEX_PATH/Info.plist"
+          echo "--- App Info.plist 前几行 ---"
+          head -n 6 "$APP_PATH/Info.plist"
+          echo "--- appex Info.plist 前几行 ---"
+          head -n 6 "$APPEX_PATH/Info.plist"
+
+          echo "==> 2) 给扩展和主程序做 ad-hoc 签名，生成 _CodeSignature"
+          echo "    （否则工具会报 Info.plist 或签名已被修改）"
+          codesign --force --sign - --timestamp=none "$APPEX_PATH" || echo "  appex ad-hoc 签名失败（不致命，工具会重签）"
+          codesign --force --sign - --timestamp=none "$APP_PATH"   || echo "  app ad-hoc 签名失败（不致命，工具会重签）"
+          echo "--- appex 签名信息 ---"
+          codesign -dv "$APPEX_PATH" 2>&1 | head -n 12 || true
+          echo "--- appex 是否有 _CodeSignature ---"
+          ls -la "$APPEX_PATH/_CodeSignature" 2>&1 || true
+
+          echo "==> 3) 打包"
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
           zip -qry XstreeIOS-unsigned.ipa Payload
           ls -la XstreeIOS-unsigned.ipa
+          echo "--- ipa 内条目 ---"
+          unzip -l XstreeIOS-unsigned.ipa | head -n 30
 
       - name: 上传结果
         uses: actions/upload-artifact@v4
