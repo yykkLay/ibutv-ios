@@ -1,0 +1,94 @@
+name: Build unsigned iOS IPA
+
+# 没有 Mac 也能用：GitHub 免费提供 macOS 机器帮你编译
+# 用法：把这个仓库上传到 GitHub（public 仓库免费不限时长），
+#       然后到 Actions 页面点 Run workflow，跑完下载 XstreeIOS-unsigned.ipa
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    # macos-latest 会自动指向 GitHub 当前提供的最新 macOS 运行器，
+    # 避免写死版本号后运行器退役导致构建失败
+    runs-on: macos-latest
+    steps:
+      - name: 取出仓库代码
+        uses: actions/checkout@v4
+
+      - name: 查看编译环境
+        run: |
+          sw_vers
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: 安装 XcodeGen
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+          HOMEBREW_NO_INSTALL_CLEANUP: "1"
+        run: brew install xcodegen || brew install --quiet xcodegen
+
+      - name: 生成 Xcode 工程
+        run: |
+          xcodegen --version
+          xcodegen generate
+          ls -la
+          echo "--- 工程里可用的 scheme / target ---"
+          xcodebuild -project XstreeIOS.xcodeproj -list
+
+      - name: 编译（不签名）
+        run: |
+          LIST=$(xcodebuild -project XstreeIOS.xcodeproj -list 2>/dev/null || true)
+          SCHEMES_PART="${LIST#*Schemes:}"
+          if [[ "$SCHEMES_PART" == *XstreeIOS* ]]; then
+            echo "==> 用 scheme 构建"
+            xcodebuild \
+              -project XstreeIOS.xcodeproj \
+              -scheme XstreeIOS \
+              -configuration Release \
+              -sdk iphoneos \
+              -destination 'generic/platform=iOS' \
+              -derivedDataPath build \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="" \
+              build
+          else
+            echo "==> 没有找到 scheme，退回用 target 构建"
+            xcodebuild \
+              -project XstreeIOS.xcodeproj \
+              -target XstreeIOS \
+              -configuration Release \
+              -sdk iphoneos \
+              -derivedDataPath build \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="" \
+              build
+          fi
+
+      - name: 打包成未签名的 ipa
+        run: |
+          set -e
+          echo "==> 查找编译产物"
+          APP_PATH=$(find . -type d -name "XstreeIOS.app" -not -path "*/Index.noindex/*" | head -n 1)
+          echo "找到: $APP_PATH"
+          if [ -z "$APP_PATH" ]; then
+            echo "没有找到 XstreeIOS.app，下面列出 build 目录结构以便排查："
+            find . -maxdepth 6 -type d | head -n 60
+            exit 1
+          fi
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          zip -qry XstreeIOS-unsigned.ipa Payload
+          ls -la XstreeIOS-unsigned.ipa
+
+      - name: 上传结果
+        uses: actions/upload-artifact@v4
+        with:
+          name: XstreeIOS-unsigned-ipa
+          path: XstreeIOS-unsigned.ipa
+          if-no-files-found: error
