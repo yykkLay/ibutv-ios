@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ibutv 兼容</title>
+  <style>
+    body {
+      width: 280px;
+      margin: 0;
+      padding: 14px 16px 16px;
+      font: 13px/1.6 -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      color: #111;
+      background: #fff;
+    }
+    h1 { font-size: 15px; margin: 0 0 4px; }
+    p.sub { margin: 0 0 12px; color: #777; font-size: 11px; }
+    .row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-top: 1px solid #eee;
+    }
+    .row span.label { font-size: 13px; }
+    .row span.desc { display: block; color: #888; font-size: 11px; }
+    .switch { position: relative; width: 46px; height: 26px; flex: none; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0; cursor: pointer;
+      background: #ccc; border-radius: 26px; transition: .2s;
+    }
+    .slider::before {
+      content: ""; position: absolute; height: 20px; width: 20px;
+      left: 3px; top: 3px; background: #fff; border-radius: 50%;
+      transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    }
+    input:checked + .slider { background: #34c759; }
+    input:checked + .slider::before { transform: translateX(20px); }
+    .note {
+      margin-top: 12px; padding: 8px 10px; border-radius: 8px;
+      background: #fff8e1; color: #8a6d00; font-size: 11px; line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <h1>ibutv 兼容</h1>
+  <p class="sub">iOS / iPadOS Safari 上的“插件替代”</p>
+
+  <div class="row">
+    <div>
+      <span class="label">补发扩展就绪信号</span>
+      <span class="desc">让 ibutv 认为插件已安装</span>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="compatEnabled">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="note">
+    仅在 ibutv.com 与 xstree.com 上补发信号，不读取、不上传你的 Cookie 或账号信息。<br>
+    视频能否播放取决于 ibutv 服务器：原插件用于取流的能力 Safari 没有，本扩展无法复制。
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
