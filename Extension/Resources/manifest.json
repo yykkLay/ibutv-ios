@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "ibutv 兼容",
+  "version": "1.0.0",
+  "description": "在 iOS / iPadOS 的 Safari 上补发 ibutv 的扩展就绪信号，并为视频播放页提供“用 ibutv 播放”的入口。",
+  "action": {
+    "default_title": "ibutv 兼容",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "*://ibutv.com/*",
+    "*://*.ibutv.com/*",
+    "*://xstree.com/*",
+    "*://*.xstree.com/*",
+    "*://www.bilibili.com/*",
+    "*://www.mgtv.com/*",
+    "*://v.youku.com/*",
+    "*://v.qq.com/*",
+    "*://www.iqiyi.com/*",
+    "*://tv.sohu.com/*",
+    "*://www.ixigua.com/*",
+    "*://www.le.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://ibutv.com/*",
+        "*://*.ibutv.com/*",
+        "*://xstree.com/*",
+        "*://*.xstree.com/*"
+      ],
+      "js": ["ibutv-compat.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "*://www.bilibili.com/bangumi/play/*",
+        "*://www.bilibili.com/video/*",
+        "*://www.mgtv.com/b/*",
+        "*://v.youku.com/v_show/*",
+        "*://v.youku.com/video*",
+        "*://v.qq.com/x/cover/*",
+        "*://v.qq.com/x/page/*",
+        "*://www.iqiyi.com/v_*",
+        "*://tv.sohu.com/v/*",
+        "*://www.ixigua.com/*",
+        "*://www.le.com/ptv/vplay/*"
+      ],
+      "js": ["video-jump.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}
